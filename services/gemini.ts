@@ -1,8 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { getApiKeys } from './storage';
 
-const getClient = () => {
-  const storedKeys = getApiKeys();
+const getClient = async () => {
+  const storedKeys = await getApiKeys();
   const apiKey = storedKeys.gemini || process.env.API_KEY;
   if (!apiKey) throw new Error("API Key missing. Set it in Admin or Environment.");
   return new GoogleGenAI({ apiKey });
@@ -24,26 +24,26 @@ const STYLE_MATRIX: Record<string, string> = {
 };
 
 export const enhancePrompt = async (simplePrompt: string, style: string): Promise<string> => {
-  const ai = getClient();
+  const ai = await getClient();
   const technicals = STYLE_MATRIX[style] || "premium vector art, clean edges, high contrast";
-  
+
   const prompt = `Act as a senior POD art director. Convert the idea: "${simplePrompt}" into a high-fidelity image prompt. 
   Apply the "${style}" style using these technical traits: ${technicals}.
   The result MUST be an ISOLATED spot graphic on a SOLID PURE WHITE background. 
   Ensure a wide margin around the subject. No text. No frames. High contrast. Keep under 50 words.`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.0-flash',
     contents: prompt,
   });
-  
+
   return response.text?.trim() || simplePrompt;
 };
 
 export const generateDesign = async (prompt: string, style: string, referenceImageBase64?: string): Promise<string> => {
-  const ai = getClient();
+  const ai = await getClient();
   const technicals = STYLE_MATRIX[style] || "clean vector style";
-  
+
   const coreInstruction = `Create an ISOLATED graphic on a SOLID WHITE background. Subject: ${prompt}.
   TECHNICAL STYLE: Strictly adhere to the ${style} aesthetic: ${technicals}.
   CONSTRAINTS: No background elements, no borders, no text, no mannequins. 
@@ -56,7 +56,7 @@ export const generateDesign = async (prompt: string, style: string, referenceIma
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: 'gemini-2.0-flash',
       contents: { parts },
       config: { imageConfig: { aspectRatio: "1:1" } }
     });
@@ -70,10 +70,10 @@ export const generateDesign = async (prompt: string, style: string, referenceIma
 };
 
 export const editDesign = async (imageBase64: string, prompt: string): Promise<string> => {
-  const ai = getClient();
+  const ai = await getClient();
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: 'gemini-2.0-flash',
       contents: {
         parts: [{ inlineData: { data: imageBase64.split(',')[1], mimeType: 'image/png' } }, { text: prompt }],
       },
