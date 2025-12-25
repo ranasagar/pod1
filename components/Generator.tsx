@@ -51,8 +51,6 @@ const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, gallery, onSele
       setPrompt(betterPrompt);
     } catch (e: any) {
       console.error(e);
-    } catch (e: any) {
-      console.error(e);
       let msg = "Enhancement failed: ";
       // Check for specific Google API disabled error
       if (e.message && (e.message.includes("Generative Language API") || e.message.includes("SERVICE_DISABLED"))) {
@@ -187,7 +185,7 @@ const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, gallery, onSele
                 onChange={(e) => setSelectedModel(e.target.value as any)}
                 className="bg-zinc-900 border border-zinc-700 text-xs rounded px-2 py-1 outline-none focus:border-indigo-500"
               >
-                <option value="gemini">Gemini 2.5 Flash (Fast Free)</option>
+                <option value="gemini">Gemini 2.0 Flash (Fast Free)</option>
                 <option value="auto">Auto (Best Free)</option>
                 <option value="pollinations">Pollinations (Flux - No Key)</option>
                 <option value="huggingface">Hugging Face (SDXL Free)</option>
