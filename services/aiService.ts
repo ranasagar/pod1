@@ -9,15 +9,7 @@ interface GenerationResult {
   provider: string;
 }
 
-const getKeys = () => {
-  const keys = getApiKeys();
-  return {
-    gemini: keys.gemini || process.env.API_KEY,
-    stability: keys.stability,
-    openai: keys.openai,
-    huggingface: keys.huggingface
-  };
-};
+// getKeys removed (using async version below)
 
 // --- HELPER: RESIZE IMAGE ---
 const resizeForApi = (base64Str: string, targetW: number = 1024, targetH: number = 1024): Promise<string> => {
@@ -316,4 +308,3 @@ export const generateDesignWithFallback = async (
 
   throw new Error(`All providers failed. Errors: ${errorLog.join(' | ')}`);
 };
-```
