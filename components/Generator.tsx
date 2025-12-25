@@ -51,9 +51,17 @@ const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, gallery, onSele
       setPrompt(betterPrompt);
     } catch (e: any) {
       console.error(e);
+    } catch (e: any) {
+      console.error(e);
       let msg = "Enhancement failed: ";
-      if (e.message && e.message.includes("API Key")) msg += "Gemini API Key missing. Set it in Admin.";
-      else msg += e.message || "Unknown error";
+      // Check for specific Google API disabled error
+      if (e.message && (e.message.includes("Generative Language API") || e.message.includes("SERVICE_DISABLED"))) {
+        msg = "Googe Generative Language API is disabled. Please enable it in the Google Cloud Console for your project.";
+      } else if (e.message && e.message.includes("API Key")) {
+        msg += "Gemini API Key missing. Set it in Admin.";
+      } else {
+        msg += e.message || "Unknown error";
+      }
       setError(msg);
     } finally {
       setEnhancing(false);
@@ -123,10 +131,10 @@ const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, gallery, onSele
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 h-full max-h-[85vh]">
+    <div className="flex flex-col lg:flex-row gap-8 min-h-full">
       {/* Sidebar Gallery */}
       {gallery.length > 0 && (
-        <div className="hidden lg:flex flex-col w-48 shrink-0 bg-zinc-900 rounded-2xl border border-zinc-800 p-4 overflow-hidden">
+        <div className="hidden lg:flex flex-col w-48 shrink-0 bg-zinc-900 rounded-2xl border border-zinc-800 p-4 sticky top-0 h-[calc(100vh-8rem)]">
           <h3 className="text-sm font-bold text-zinc-400 mb-4 flex items-center gap-2"><History size={16} /> Recent</h3>
           <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
             {gallery.map((url, i) => (
@@ -146,7 +154,7 @@ const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, gallery, onSele
       )}
 
       {/* Main Generator */}
-      <div className="flex-1 flex flex-col justify-center max-w-2xl mx-auto w-full space-y-8 animate-fade-in">
+      <div className="flex-1 flex flex-col my-auto max-w-2xl mx-auto w-full space-y-8 animate-fade-in pb-8">
         <div className="text-center space-y-4">
           <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
             Create Your Next Bestseller
@@ -242,8 +250,8 @@ const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, gallery, onSele
                   key={s}
                   onClick={() => setStyle(s)}
                   className={`p-3 text-xs md:text-sm font-medium rounded-lg border transition-all ${style === s
-                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-900/20'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                    ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-900/20'
+                    : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700 hover:text-white'
                     }`}
                 >
                   {s}
@@ -280,8 +288,8 @@ const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, gallery, onSele
               onClick={handleGenerate}
               disabled={loading || (!prompt && !refImage)}
               className={`flex-[2] py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 transition-all ${loading || (!prompt && !refImage)
-                  ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-900/20 transform hover:-translate-y-0.5'
+                ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-900/20 transform hover:-translate-y-0.5'
                 }`}
             >
               {loading ? (
