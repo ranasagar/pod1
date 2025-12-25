@@ -21,7 +21,7 @@ const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, gallery, onSele
   const [providerUsed, setProviderUsed] = useState<string | null>(null);
 
   // Settings - Default set to Gemini as requested
-  const [selectedModel, setSelectedModel] = useState<'auto' | 'gemini' | 'stability' | 'dalle' | 'huggingface' | 'pollinations'>('gemini');
+  const [selectedModel, setSelectedModel] = useState<'auto' | 'gemini' | 'stability' | 'dalle' | 'huggingface' | 'pollinations' | 'pollinations-turbo' | 'huggingface-openjourney'>('gemini');
   const [usageCount, setUsageCount] = useState(0);
 
   // Reference Image State
@@ -188,7 +188,9 @@ const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, gallery, onSele
                 <option value="gemini">Gemini 2.5 Flash (Fast Free)</option>
                 <option value="auto">Auto (Best Free)</option>
                 <option value="pollinations">Pollinations (Flux - No Key)</option>
+                <option value="pollinations-turbo">Pollinations (Turbo - Fast)</option>
                 <option value="huggingface">Hugging Face (SDXL Free)</option>
+                <option value="huggingface-openjourney">Hugging Face (OpenJourney)</option>
                 <option value="stability">Stability XL (Paid)</option>
                 <option value="dalle">DALL-E 3 (Paid)</option>
               </select>

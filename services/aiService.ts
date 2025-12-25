@@ -2,7 +2,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { getApiKeys } from './storage';
 
-type AIModel = 'auto' | 'gemini' | 'stability' | 'dalle' | 'huggingface' | 'pollinations';
+
+type AIModel = 'auto' | 'gemini' | 'stability' | 'dalle' | 'huggingface' | 'pollinations' | 'pollinations-turbo' | 'huggingface-openjourney';
 
 interface GenerationResult {
   url: string;
@@ -54,14 +55,19 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
 };
 
 // --- POLLINATIONS.AI (FREE, NO KEY) ---
-const generatePollinations = async (prompt: string, style: string, refImageBase64?: string): Promise<string> => {
+const generatePollinations = async (prompt: string, style: string, refImageBase64?: string, model: 'flux' | 'turbo' = 'flux'): Promise<string> => {
   // Force centered, die-cut style to avoid square edges
   const fullPrompt = encodeURIComponent(`isolated ${style} design, ${prompt}. centered in middle, wide white margin background, organic die-cut edges, vector spot illustration. no crop, no frame, no square borders.`);
   const seed = Math.floor(Math.random() * 1000000);
-  const url = `https://image.pollinations.ai/prompt/${fullPrompt}?width=1024&height=1024&seed=${seed}&model=flux&nologo=true`;
+  const url = `https://image.pollinations.ai/prompt/${fullPrompt}?width=1024&height=1024&seed=${seed}&model=${model}&nologo=true`;
 
+  console.log(`[Pollinations] Requesting: ${url}`);
   const response = await fetch(url);
-  if (!response.ok) throw new Error("Pollinations API failed");
+  if (!response.ok) {
+    const txt = await response.text();
+    console.error(`[Pollinations] Failed: ${response.status} ${txt}`);
+    throw new Error(`Pollinations API failed (${response.status}): ${txt.slice(0, 100)}`);
+  }
   const blob = await response.blob();
   return await blobToBase64(blob);
 };
@@ -77,11 +83,10 @@ const getKeys = async () => {
 };
 
 // --- HUGGING FACE (FREE TIER KEY) ---
-const generateHuggingFace = async (prompt: string, style: string, apiKey: string, refImageBase64?: string): Promise<string> => {
+const generateHuggingFace = async (prompt: string, style: string, apiKey: string, refImageBase64?: string, modelId: string = "stabilityai/stable-diffusion-xl-base-1.0"): Promise<string> => {
   if (!apiKey) throw new Error("Hugging Face Access Token missing. Please add it in Admin settings.");
 
-  const model = "stabilityai/stable-diffusion-xl-base-1.0";
-  const apiURL = `https://api-inference.huggingface.co/models/${model}`;
+  const apiURL = `https://api-inference.huggingface.co/models/${modelId}`;
 
   const payload = {
     inputs: `${style} style vector art. ${prompt}. Centered spot graphic, isolated on white background. Wide white borders. Organic contour.`,
@@ -116,8 +121,8 @@ const generateHuggingFace = async (prompt: string, style: string, apiKey: string
     const blob = await response.blob();
     return await blobToBase64(blob);
   } catch (error: any) {
-    if (error.message === 'Failed to fetch') {
-      throw new Error("Connection failed (CORS blocked). Fallback recommended.");
+    if (error.message === 'Failed to fetch' || error.message.includes('CORS')) {
+      throw new Error("Connection blocked (CORS). Browser prevents direct HF API access. Use a server proxy or try Pollinations.");
     }
     throw error;
   }
@@ -265,8 +270,13 @@ export const generateDesignWithFallback = async (
     if (preferredModel === 'gemini') result = await tryProvider('Gemini', () => generateGemini(prompt, style, keys.gemini, refImageBase64));
     if (preferredModel === 'stability') result = await tryProvider('Stability', () => generateStability(prompt, style, keys.stability, refImageBase64));
     if (preferredModel === 'dalle') result = await tryProvider('DALL-E', () => generateOpenAI(prompt, style, keys.openai));
+
+    // New Models
     if (preferredModel === 'huggingface') result = await tryProvider('Hugging Face (SDXL)', () => generateHuggingFace(prompt, style, keys.huggingface, refImageBase64));
-    if (preferredModel === 'pollinations') result = await tryProvider('Pollinations (Flux)', () => generatePollinations(prompt, style, refImageBase64));
+    if (preferredModel === 'huggingface-openjourney') result = await tryProvider('Hugging Face (OpenJourney)', () => generateHuggingFace(prompt, style, keys.huggingface, refImageBase64, 'prompthero/openjourney'));
+
+    if (preferredModel === 'pollinations') result = await tryProvider('Pollinations (Flux)', () => generatePollinations(prompt, style, refImageBase64, 'flux'));
+    if (preferredModel === 'pollinations-turbo') result = await tryProvider('Pollinations (Turbo)', () => generatePollinations(prompt, style, refImageBase64, 'turbo'));
 
     // SAFE FALLBACK: If explicit selection fails, try Pollinations before giving up
     if (!result) {
