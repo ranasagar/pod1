@@ -47,7 +47,7 @@ const Generator: React.FC<GeneratorProps> = ({ onImageGenerated, gallery, onSele
     setEnhancing(true);
     setError(null);
     try {
-      const betterPrompt = await enhancePrompt(prompt, style);
+      const betterPrompt = await enhancePrompt(prompt, style, selectedModel);
       setPrompt(betterPrompt);
     } catch (e: any) {
       console.error(e);
