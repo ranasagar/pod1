@@ -245,7 +245,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onLogout }) => {
                   />
                   <Key className="absolute left-3 top-3.5 text-zinc-500" size={18} />
                 </div>
-                <p className="text-xs text-zinc-500">Google's Gemini 2.0 Flash is the default free model.</p>
+                <p className="text-xs text-zinc-500">Google's Gemini 2.5 Flash is the default free model.</p>
               </div>
 
               <div className="space-y-2">

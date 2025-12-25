@@ -144,7 +144,7 @@ const generateGemini = async (prompt: string, style: string, apiKey: string, ref
   }
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-2.5-flash-image',
     contents: { parts },
     config: { imageConfig: { aspectRatio: "1:1" } }
   });
