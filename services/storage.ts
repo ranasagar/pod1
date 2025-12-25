@@ -42,7 +42,7 @@ const fetchSetting = async (key: string, defaultValue: any) => {
       .from('app_settings')
       .select('value')
       .eq('key', key)
-      .single();
+      .maybeSingle();
 
     if (error || !data) return defaultValue;
     return data.value;
