@@ -1,4 +1,5 @@
 import { DEFAULT_TEXTURES } from '../types';
+import { supabase } from './supabase';
 
 const DEFAULT_STYLES = [
   "Keith Haring Street",
@@ -19,13 +20,13 @@ const DEFAULT_STYLES = [
 
 const DEFAULT_MOCKUPS = {
   apparel: [
-    "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800&auto=format&fit=crop", 
+    "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1503341455253-b2e723099de5?q=80&w=800&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop",
   ],
   home: [
-    "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?q=80&w=800&auto=format&fit=crop", 
-    "https://images.unsplash.com/photo-1584100936595-c0654b55a2e6?q=80&w=800&auto=format&fit=crop", 
+    "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?q=80&w=800&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1584100936595-c0654b55a2e6?q=80&w=800&auto=format&fit=crop",
     "https://plus.unsplash.com/premium_photo-1675808560942-83416b0808b2?q=80&w=800&auto=format&fit=crop",
   ],
   accessories: [
@@ -34,97 +35,105 @@ const DEFAULT_MOCKUPS = {
   ]
 };
 
-const STORAGE_KEYS = {
-  STYLES: 'pod_store_v5_styles',
-  MOCKUPS: 'pod_store_v5_mockups',
-  TEXTURES: 'pod_store_v5_textures',
-  API_KEYS: 'pod_store_v5_api_keys'
-};
-
-export const getStyles = (): string[] => {
-  const stored = localStorage.getItem(STORAGE_KEYS.STYLES);
-  return stored ? JSON.parse(stored) : DEFAULT_STYLES;
-};
-
-export const addStyle = (style: string): string[] => {
-  const current = getStyles();
-  const updated = [...current, style];
-  localStorage.setItem(STORAGE_KEYS.STYLES, JSON.stringify(updated));
-  return updated;
-};
-
-export const removeStyle = (style: string): string[] => {
-  const current = getStyles();
-  const updated = current.filter(s => s !== style);
-  localStorage.setItem(STORAGE_KEYS.STYLES, JSON.stringify(updated));
-  return updated;
-};
-
-export const getMockups = () => {
-  const stored = localStorage.getItem(STORAGE_KEYS.MOCKUPS);
-  if (!stored) return JSON.parse(JSON.stringify(DEFAULT_MOCKUPS));
+// Helper to fetch data with default fallback
+const fetchSetting = async (key: string, defaultValue: any) => {
   try {
-    const parsed = JSON.parse(stored);
-    const defaults = DEFAULT_MOCKUPS;
-    const validate = (arr: any, fallback: string[]) => 
-      (Array.isArray(arr) && arr.length > 0 && typeof arr[0] === 'string') ? arr : fallback;
-    return {
-      apparel: validate(parsed.apparel, defaults.apparel),
-      home: validate(parsed.home, defaults.home),
-      accessories: validate(parsed.accessories, defaults.accessories)
-    };
+    const { data, error } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', key)
+      .single();
+
+    if (error || !data) return defaultValue;
+    return data.value;
   } catch (e) {
-    return JSON.parse(JSON.stringify(DEFAULT_MOCKUPS));
+    console.error(`Error fetching ${key}:`, e);
+    return defaultValue;
   }
 };
 
-export const addMockup = (category: 'apparel' | 'home' | 'accessories', url: string) => {
-  const current = getMockups();
+// Helper to save data
+const saveSetting = async (key: string, value: any) => {
+  try {
+    const { error } = await supabase
+      .from('app_settings')
+      .upsert({ key, value });
+
+    if (error) throw error;
+    return true;
+  } catch (e) {
+    console.error(`Error saving ${key}:`, e);
+    return false;
+  }
+};
+
+export const getStyles = async (): Promise<string[]> => {
+  return await fetchSetting('styles', DEFAULT_STYLES);
+};
+
+export const addStyle = async (style: string): Promise<string[]> => {
+  const current = await getStyles();
+  const updated = [...current, style];
+  await saveSetting('styles', updated);
+  return updated;
+};
+
+export const removeStyle = async (style: string): Promise<string[]> => {
+  const current = await getStyles();
+  const updated = current.filter(s => s !== style);
+  await saveSetting('styles', updated);
+  return updated;
+};
+
+export const getMockups = async () => {
+  return await fetchSetting('mockups', DEFAULT_MOCKUPS);
+};
+
+export const addMockup = async (category: 'apparel' | 'home' | 'accessories', url: string) => {
+  const current = await getMockups();
   current[category] = [...(current[category] || []), url];
-  localStorage.setItem(STORAGE_KEYS.MOCKUPS, JSON.stringify(current));
+  await saveSetting('mockups', current);
   return current;
 };
 
-export const removeMockup = (category: 'apparel' | 'home' | 'accessories', url: string) => {
-  const current = getMockups();
+export const removeMockup = async (category: 'apparel' | 'home' | 'accessories', url: string) => {
+  const current = await getMockups();
   if (current[category]) {
     current[category] = current[category].filter((u: string) => u !== url);
-    localStorage.setItem(STORAGE_KEYS.MOCKUPS, JSON.stringify(current));
+    await saveSetting('mockups', current);
   }
   return current;
 };
 
-export const getTextures = () => {
-  const stored = localStorage.getItem(STORAGE_KEYS.TEXTURES);
-  return stored ? JSON.parse(stored) : DEFAULT_TEXTURES;
+export const getTextures = async () => {
+  return await fetchSetting('textures', DEFAULT_TEXTURES);
 };
 
-export const addTexture = (name: string, url: string) => {
-  const current = getTextures();
+export const addTexture = async (name: string, url: string) => {
+  const current = await getTextures();
   const updated = [...current, { name, url }];
-  localStorage.setItem(STORAGE_KEYS.TEXTURES, JSON.stringify(updated));
+  await saveSetting('textures', updated);
   return updated;
 };
 
-export const removeTexture = (url: string) => {
-  const current = getTextures();
+export const removeTexture = async (url: string) => {
+  const current = await getTextures();
   const updated = current.filter((t: any) => t.url !== url);
-  localStorage.setItem(STORAGE_KEYS.TEXTURES, JSON.stringify(updated));
+  await saveSetting('textures', updated);
   return updated;
 };
 
-export const getApiKeys = () => {
-  const stored = localStorage.getItem(STORAGE_KEYS.API_KEYS);
-  return stored ? JSON.parse(stored) : { gemini: '', stability: '', openai: '', huggingface: '' };
+export const getApiKeys = async () => {
+  return await fetchSetting('api_keys', { gemini: '', stability: '', openai: '', huggingface: '' });
 };
 
-export const saveApiKeys = (keys: any) => {
-  localStorage.setItem(STORAGE_KEYS.API_KEYS, JSON.stringify(keys));
+export const saveApiKeys = async (keys: any) => {
+  await saveSetting('api_keys', keys);
 };
 
-export const resetToDefaults = () => {
-  localStorage.removeItem(STORAGE_KEYS.STYLES);
-  localStorage.removeItem(STORAGE_KEYS.MOCKUPS);
-  localStorage.removeItem(STORAGE_KEYS.TEXTURES);
-  localStorage.removeItem(STORAGE_KEYS.API_KEYS);
+export const resetToDefaults = async () => {
+  await saveSetting('styles', DEFAULT_STYLES);
+  await saveSetting('mockups', DEFAULT_MOCKUPS);
+  await saveSetting('textures', DEFAULT_TEXTURES);
+  await saveSetting('api_keys', { gemini: '', stability: '', openai: '', huggingface: '' });
 };
