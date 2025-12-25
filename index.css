@@ -1,73 +1,37 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-    body {
-        font-family: 'Inter', sans-serif;
-    }
-}
-
-@layer utilities {
-
-    /* Custom scrollbar for a premium feel */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: #18181b;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #3f3f46;
-        border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: #52525b;
-    }
-
-    .checkboard-bg {
-        background-color: #18181b;
-        background-image:
-            linear-gradient(45deg, #27272a 25%, transparent 25%),
-            linear-gradient(-45deg, #27272a 25%, transparent 25%),
-            linear-gradient(45deg, transparent 75%, #27272a 75%),
-            linear-gradient(-45deg, transparent 75%, #27272a 75%);
-        background-size: 20px 20px;
-        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-    }
+@theme {
+    --font-sans: 'Inter', sans-serif;
 }
 
 @layer base {
     body {
-        font-family: 'Inter', sans-serif;
+        font-family: var(--font-sans);
+        @apply bg-zinc-950 text-zinc-100;
+        /* Setting default dark theme background/text since it looked missing in screenshot */
     }
 }
 
+/* Custom scrollbar for a premium feel */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #18181b;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #3f3f46;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #52525b;
+}
+
 @layer utilities {
-
-    /* Custom scrollbar for a premium feel */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: #18181b;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #3f3f46;
-        border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: #52525b;
-    }
-
     .checkboard-bg {
         background-color: #18181b;
         background-image:
